@@ -1,7 +1,7 @@
+venv/
 __pycache__/
 *.pyc
-.venv/
-venv/
+instance/
+uploads/
+*.docx
 .env
-.idea/
-.vscode/

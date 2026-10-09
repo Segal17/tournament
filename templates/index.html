@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+
+{% block title %}Турнир{% endblock %}
+
+{% block content %}
+<details class="rules-block">
+  <summary>❓ Правила жеребьёвки</summary>
+  <p>Первый этап. Во время жеребьёвки каждый участник получает номер на два этапа.
+     Участники разбиваются на пары согласно номерам, полученным во время жеребьёвки.
+     Номера разведены так, чтобы участники не играли два этапа на одной площадке.</p>
+</details>
+
+{% if error %}
+<p class="error-message">{{ error }}</p>
+{% endif %}
+
+<section class="card">
+  <h1>Жеребьёвка турнира</h1>
+  <form method="post" action="{{ url_for('main.draw') }}">
+    <label for="tournament_name">Название турнира</label>
+    <input type="text" name="tournament_name" id="tournament_name"
+           value="{{ tournament_name or '' }}"
+           placeholder="г.Кондопога — Октябрь 2026 г.">
+
+    <fieldset>
+      <legend>Турнир</legend>
+      <label class="radio">
+        <input type="radio" name="gender" value="W" {% if gender != 'M' %}checked{% endif %}> Женский (Ж)
+      </label>
+      <label class="radio">
+        <input type="radio" name="gender" value="M" {% if gender == 'M' %}checked{% endif %}> Мужской (М)
+      </label>
+    </fieldset>
+
+    <label for="players">Участники (по одной фамилии на строку, минимум 4)</label>
+    <textarea name="players" id="players" rows="8" required>{{ players_text or '' }}</textarea>
+
+    <fieldset>
+      <legend>Партий на игрока</legend>
+      <label class="radio">
+        <input type="radio" name="matches" value="1" {% if matches != 2 %}checked{% endif %}> 1
+      </label>
+      <label class="radio">
+        <input type="radio" name="matches" value="2" {% if matches == 2 %}checked{% endif %}> 2
+      </label>
+    </fieldset>
+
+    <label for="courts">Площадок</label>
+    <input type="number" name="courts" id="courts" min="1" max="2" value="{{ courts or 2 }}">
+
+    <label for="start_time">Начало</label>
+    <input type="time" name="start_time" id="start_time" value="{{ start_time or '09:00' }}">
+
+    <label for="game_minutes">Длительность игры, мин</label>
+    <input type="number" name="game_minutes" id="game_minutes" min="5" value="{{ game_minutes or 40 }}">
+
+    <label for="break_minutes">Перерыв, мин</label>
+    <input type="number" name="break_minutes" id="break_minutes" min="0" value="{{ break_minutes or 5 }}">
+
+    <button type="submit">🎲 Жеребьёвка</button>
+  </form>
+</section>
+
+{% if draw_result %}
+<section class="card" id="draw-result">
+  <h2>Результат жеребьёвки</h2>
+  <table>
+    <thead>
+      <tr><th>Номер</th><th>Фамилия</th></tr>
+    </thead>
+    <tbody>
+      {% for num, name in draw_result.items() %}
+      <tr>
+        <td>{{ num }}</td>
+        <td>{{ name }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <form method="post" action="{{ url_for('main.schedule') }}">
+    <p><strong>Вариант схемы этапа 1:</strong></p>
+    <label class="radio">
+      <input type="radio" name="variant" value="through_one" checked>
+      Через одного (1:3, 2:4, 5:7, 6:8)
+    </label>
+    <label class="radio">
+      <input type="radio" name="variant" value="first_last">
+      Первый с последним (1:8, 2:7, 3:6, 4:5)
+    </label>
+
+    <fieldset>
+      <legend>Выходят из группы</legend>
+      <label class="radio">
+        <input type="radio" name="playoff_size" value="4" checked> 4
+      </label>
+      <label class="radio">
+        {% if n_players >= 8 %}
+          <input type="radio" name="playoff_size" value="8"> 8
+        {% else %}
+          <input type="radio" name="playoff_size" value="8" disabled>
+          8 <small class="hint">(нужно минимум 8 участников)</small>
+        {% endif %}
+      </label>
+    </fieldset>
+
+    <label for="scheme1">Схема этапа 1</label>
+    <input type="text" name="scheme1" id="scheme1" required
+           value="{{ scheme1_through or '' }}"
+           data-through="{{ scheme1_through or '' }}"
+           data-first="{{ scheme1_first or '' }}"
+           placeholder="1:3, 2:4, 5:7, 6:8">
+
+    {% if matches == 2 %}
+    <label for="scheme2">Схема этапа 2</label>
+    <input type="text" name="scheme2" id="scheme2"
+           value="{{ scheme2_through or '' }}"
+           placeholder="2:8, 1:7, 4:6, 3:5">
+    {% endif %}
+
+    <button type="submit">📅 Сформировать расписание</button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

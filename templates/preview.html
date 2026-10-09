@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+
+{% block title %}Расписание{% endblock %}
+
+{% block content %}
+<details class="rules-block">
+  <summary>❓ Правила жеребьёвки</summary>
+  <p>Первый этап. Во время жеребьёвки каждый участник получает номер на два этапа.
+     Участники разбиваются на пары согласно номерам, полученным во время жеребьёвки.
+     Номера разведены так, чтобы участники не играли два этапа на одной площадке.</p>
+</details>
+
+<h1>Расписание турнира</h1>
+
+<section class="card">
+  <h2>Сводная информация</h2>
+  <ul class="info-list">
+    <li><strong>Дата:</strong> {{ info.date }}</li>
+    <li><strong>Участников:</strong> {{ info.n_players }}</li>
+    <li><strong>Партий на игрока:</strong> {{ info.matches }}</li>
+    <li><strong>Площадок:</strong> {{ info.courts }}</li>
+    <li><strong>Длительность игры:</strong> {{ info.game_minutes }} мин</li>
+    <li><strong>Перерыв:</strong> {{ info.break_minutes }} мин</li>
+  </ul>
+</section>
+
+<section class="card">
+  <h2>Жеребьёвка</h2>
+  <table>
+    <thead>
+      <tr><th>Номер</th><th>Фамилия</th></tr>
+    </thead>
+    <tbody>
+      {% for num, name in draw_result.items() %}
+      <tr><td>{{ num }}</td><td>{{ name }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+
+{% for court in range(1, info.courts + 1) %}
+<section class="card">
+  <h2>Площадка №{{ court }}</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Время</th>
+        <th>Этап</th>
+        <th>Игрок 1</th>
+        <th>:</th>
+        <th>Игрок 2</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for match in schedule %}
+        {% if match.court == court %}
+        <tr class="{% if match.is_playoff %}playoff-row{% endif %}">
+          <td>{{ match.time }}</td>
+          <td>
+            {% if match.is_playoff %}
+              {{ match.playoff_label }}
+            {% else %}
+              {{ match.stage }}
+            {% endif %}
+          </td>
+          <td>
+            {% if match.is_playoff %}
+              {{ match.name1 }}
+            {% else %}
+              №{{ match.num1 }} {{ match.name1 }}
+              {% if match.warning_back_to_back %}<span class="warning" title="Подряд">⚠</span>{% endif %}
+              {% if match.warning_same_court %}<span class="warning" title="Та же площадка">⚠</span>{% endif %}
+            {% endif %}
+          </td>
+          <td>:</td>
+          <td>
+            {% if match.is_playoff %}
+              {{ match.name2 or '' }}
+            {% else %}
+              {% if match.num2 %}№{{ match.num2 }} {{ match.name2 }}{% else %}—{% endif %}
+            {% endif %}
+          </td>
+        </tr>
+        {% endif %}
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endfor %}
+
+<div class="actions">
+  <a class="button" href="{{ url_for('main.download') }}">💾 Скачать Word</a>
+  <a class="button" href="{{ url_for('main.template') }}">📄 Скачать пустой шаблон</a>
+  <button type="button" class="button" onclick="window.print()">🖨 Печать</button>
+  <form method="post" action="{{ url_for('main.reset') }}" class="inline-form">
+    <button type="submit" class="button">🔄 Заново</button>
+  </form>
+</div>
+{% endblock %}
